@@ -8,6 +8,7 @@ use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
+use Composer\Script\Event;
 use Composer\Script\ScriptEvents;
 
 final class Installer implements PluginInterface, EventSubscriberInterface
@@ -30,6 +31,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface
     {
         $this->composer = $composer;
         $this->io = $io;
+        $io->write('<warning>Activating installation...</warning>');
     }
 
     public function deactivate(Composer $composer, IOInterface $io): void
@@ -43,13 +45,16 @@ final class Installer implements PluginInterface, EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            ScriptEvents::POST_INSTALL_CMD => ['install', 1],
-            ScriptEvents::POST_UPDATE_CMD => ['install', 1],
+            ScriptEvents::PRE_UPDATE_CMD => ['install', 1],
+//            ScriptEvents::PRE_INSTALL_CMD => ['install', 1],
+//            ScriptEvents::POST_INSTALL_CMD => ['install', 1],
+//            ScriptEvents::POST_UPDATE_CMD => ['install', 1],
         ];
     }
 
-    public function install(): void
+    public function install(Event $event): void
     {
+        $this->io->write('<warning>Endroid Installer about to install! ' . $event->getName() . '</>');
         $foundCompatibleProjectType = false;
         foreach ($this->projectTypes as $projectType => $paths) {
             if ($this->isCompatibleProjectType($paths)) {
@@ -86,6 +91,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface
         $packages = $this->composer->getRepositoryManager()->getLocalRepository()->getPackages();
 
         foreach ($packages as $package) {
+
             // Avoid handling duplicates: getPackages sometimes returns duplicates
             if (in_array($package->getName(), $processedPackages)) {
                 continue;
@@ -101,7 +107,21 @@ final class Installer implements PluginInterface, EventSubscriberInterface
             // Check for installation files and install
             $packagePath = $this->composer->getInstallationManager()->getInstallPath($package);
             $sourcePath = $packagePath.DIRECTORY_SEPARATOR.'.install'.DIRECTORY_SEPARATOR.$projectType;
+
+            $this->insertIntoFile($package->getName(), $sourcePath . '/env.txt', '.env');
+            $this->insertIntoFile($package->getName(), $sourcePath . '/gitignore.txt', '.gitignore');
+
+            if (file_exists($postInstallPath = $sourcePath . '/post-install.txt')) {
+                $content = file_get_contents($postInstallPath);
+                $this->io->write($content);
+            }
+            $manifestPath = $packagePath.DIRECTORY_SEPARATOR.'.install'.DIRECTORY_SEPARATOR.'manifest.json';
+
+            if (file_exists($manifestPath)) {
+                $this->io->write($manifestPath);
+            }
             if (file_exists($sourcePath)) {
+                $this->io->write('<info>Installing package "'.$package->getName(). " $sourcePath</>");
                 $changed = $this->copy($sourcePath, (string) getcwd());
                 if ($changed) {
                     $this->io->write('- Configured <info>'.$package->getName().'</>');
@@ -110,8 +130,26 @@ final class Installer implements PluginInterface, EventSubscriberInterface
         }
     }
 
+    private function insertIntoFile(string $packageName, string $sourcePath, string $targetPath): void
+    {
+        if (file_exists($sourcePath)) {
+            $sourceToInsert = file_get_contents($sourcePath);
+            $existing = file_get_contents($targetPath);
+            // look for existing .env section
+            $key = sprintf('###> %s ###', $packageName);
+            if (!str_contains($existing, $key)) {
+                $existing .= "\n\n$key\n" . $sourceToInsert .
+                    sprintf('###< %s ###', $packageName) . "\n";
+                file_put_contents($targetPath, $existing);
+            }
+        }
+
+
+    }
+
     private function copy(string $sourcePath, string $targetPath): bool
     {
+        $this->io->write("- Copying $sourcePath to $targetPath <info></>");
         $changed = false;
 
         /** @var \RecursiveDirectoryIterator $iterator */
@@ -125,8 +163,11 @@ final class Installer implements PluginInterface, EventSubscriberInterface
                     mkdir($target);
                 }
             } elseif (!file_exists($target)) {
-                $this->copyFile($fileInfo->getPathname(), $target);
-                $changed = true;
+                // hack
+                if (pathinfo($target, PATHINFO_EXTENSION) !== 'txt') {
+                    $this->copyFile($fileInfo->getPathname(), $target);
+                    $changed = true;
+                }
             }
         }
 

@@ -19,6 +19,15 @@ for more information on why I created this plugin.
 
 ``` bash
 composer config allow-plugins.endroid/installer true
+
+# dev
+composer config repositories.tacman_installer '{"type": "path", "url": "/home/tac/g/tacman/installer"}' 
+composer require endroid/installer:*@dev
+```
+
+Production
+
+```bash
 composer require endroid/installer
 ```
 
@@ -31,6 +40,9 @@ will be copied to the corresponding directories in the project.
 ```
 .install
     symfony
+        env.txt
+        gitignor.txte
+        post-install.txt
         config
             packages
                 package_name.yaml
