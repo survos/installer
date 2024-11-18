@@ -89,11 +89,25 @@ final class Installer implements PluginInterface, EventSubscriberInterface
 
         $processedPackages = [];
         $packages = $this->composer->getRepositoryManager()->getLocalRepository()->getPackages();
+        $alreadyInstalled = file_exists('symfony.lock')
+            ? array_keys(json_decode(file_get_contents('symfony.lock'), true)) : [];
 
         foreach ($packages as $package) {
 
+            // Check for installation files and install
+            $packagePath = $this->composer->getInstallationManager()->getInstallPath($package);
+            $sourcePath = $packagePath.DIRECTORY_SEPARATOR.'.install'.DIRECTORY_SEPARATOR.$projectType;
+            if (!file_exists($sourcePath)) {
+                continue;
+            }
+
             // Avoid handling duplicates: getPackages sometimes returns duplicates
             if (in_array($package->getName(), $processedPackages)) {
+                continue;
+            }
+
+            if (in_array($package->getName(), $alreadyInstalled)) {
+                $this->io->write('- Skipping <info>'.$package->getName().', already installed</>');
                 continue;
             }
             $processedPackages[] = $package->getName();
@@ -104,9 +118,6 @@ final class Installer implements PluginInterface, EventSubscriberInterface
                 continue;
             }
 
-            // Check for installation files and install
-            $packagePath = $this->composer->getInstallationManager()->getInstallPath($package);
-            $sourcePath = $packagePath.DIRECTORY_SEPARATOR.'.install'.DIRECTORY_SEPARATOR.$projectType;
 
             $this->insertIntoFile($package->getName(), $sourcePath . '/env.txt', '.env');
             $this->insertIntoFile($package->getName(), $sourcePath . '/gitignore.txt', '.gitignore');
@@ -138,6 +149,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface
             // look for existing .env section
             $key = sprintf('###> %s ###', $packageName);
             if (!str_contains($existing, $key)) {
+                $this->io->write("<warning>inserting $sourcePath to $targetPath</warning>");
                 $existing .= "\n\n$key\n" . $sourceToInsert .
                     sprintf('###< %s ###', $packageName) . "\n";
                 file_put_contents($targetPath, $existing);
