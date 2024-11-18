@@ -31,7 +31,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface
     {
         $this->composer = $composer;
         $this->io = $io;
-        $io->write('<warning>Activating installation...</warning>');
+//        $io->write('<warning>Activating installation...</warning>');
     }
 
     public function deactivate(Composer $composer, IOInterface $io): void
