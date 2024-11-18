@@ -8,12 +8,14 @@
 [![Monthly Downloads](http://img.shields.io/packagist/dm/endroid/installer.svg)](https://packagist.org/packages/endroid/installer)
 [![License](http://img.shields.io/packagist/l/endroid/installer.svg)](https://packagist.org/packages/endroid/installer)
 
+This plugin was forked from https://github.com/endroid/installer, and functionality to update the .env and .gitignore files was added.  It is a simple way to get some of the functionality of https://github.com/symfony/recipes-contrib but is a bit easier to set up, since the bundle configuration is in the bundle itself, rather than a separate repo.
+
 Composer plugin for installing configuration files. The installer automatically
 detects the project type in which your library is installed and installs the
 corresponding configuration files from your package.
 
 Read the [blog](https://medium.com/@endroid/auto-package-configuration-for-symfony-e14780e29d81)
-for more information on why I created this plugin.
+for more information on why this plugin was originally created.
 
 ## Installation
 
@@ -21,7 +23,7 @@ for more information on why I created this plugin.
 composer config allow-plugins.survos/installer true
 
 # dev
-composer config repositories.survos_installer '{"type": "path", "url": "/home/tac/g/tacman/installer"}' 
+composer config repositories.survos_installer '{"type": "path", "url": "/home/tac/g/sites/installer"}' 
 composer require survos/installer:*@dev
 ```
 
@@ -41,7 +43,7 @@ will be copied to the corresponding directories in the project.
 .install
     symfony
         env.txt
-        gitignor.txte
+        gitignore.txt
         post-install.txt
         config
             packages
