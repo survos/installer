@@ -18,17 +18,17 @@ for more information on why I created this plugin.
 ## Installation
 
 ``` bash
-composer config allow-plugins.endroid/installer true
+composer config allow-plugins.survos/installer true
 
 # dev
-composer config repositories.tacman_installer '{"type": "path", "url": "/home/tac/g/tacman/installer"}' 
-composer require endroid/installer:*@dev
+composer config repositories.survos_installer '{"type": "path", "url": "/home/tac/g/tacman/installer"}' 
+composer require survos/installer:*@dev
 ```
 
 Production
 
 ```bash
-composer require endroid/installer
+composer require survos/installer
 ```
 
 ## Usage
