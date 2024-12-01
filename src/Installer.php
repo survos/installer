@@ -31,7 +31,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface
     {
         $this->composer = $composer;
         $this->io = $io;
-//        $io->write('<warning>Activating installation...</warning>');
+        $io->write('<warning>Activating installation...</warning>');
     }
 
     public function deactivate(Composer $composer, IOInterface $io): void
@@ -45,8 +45,8 @@ final class Installer implements PluginInterface, EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            ScriptEvents::PRE_UPDATE_CMD => ['install', 1],
-//            ScriptEvents::PRE_INSTALL_CMD => ['install', 1],
+//            ScriptEvents::PRE_UPDATE_CMD => ['install', 1],
+            ScriptEvents::PRE_INSTALL_CMD => ['install', 1],
 //            ScriptEvents::POST_INSTALL_CMD => ['install', 1],
 //            ScriptEvents::POST_UPDATE_CMD => ['install', 1],
         ];
@@ -125,6 +125,8 @@ final class Installer implements PluginInterface, EventSubscriberInterface
             if (file_exists($postInstallPath = $sourcePath . '/post-install.txt')) {
                 $content = file_get_contents($postInstallPath);
                 $this->io->write($content);
+            } else {
+                $this->io->warning("Missing $postInstallPath");
             }
             $manifestPath = $packagePath.DIRECTORY_SEPARATOR.'.install'.DIRECTORY_SEPARATOR.'manifest.json';
 
@@ -154,6 +156,8 @@ final class Installer implements PluginInterface, EventSubscriberInterface
                     sprintf('###< %s ###', $packageName) . "\n";
                 file_put_contents($targetPath, $existing);
             }
+        } else {
+            $this->io->warning("Missing $sourcePath");
         }
 
 

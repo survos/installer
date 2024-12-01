@@ -1,12 +1,6 @@
 # Installer
 
-*By [endroid](https://endroid.nl/)*
-
-[![Latest Stable Version](http://img.shields.io/packagist/v/endroid/installer.svg)](https://packagist.org/packages/endroid/installer)
-[![Build Status](https://github.com/endroid/installer/workflows/CI/badge.svg)](https://github.com/endroid/installer/actions)
-[![Total Downloads](http://img.shields.io/packagist/dt/endroid/installer.svg)](https://packagist.org/packages/endroid/installer)
-[![Monthly Downloads](http://img.shields.io/packagist/dm/endroid/installer.svg)](https://packagist.org/packages/endroid/installer)
-[![License](http://img.shields.io/packagist/l/endroid/installer.svg)](https://packagist.org/packages/endroid/installer)
+*By [survos](https://github.com/survos)*
 
 This plugin was forked from https://github.com/endroid/installer, and functionality to update the .env and .gitignore files was added.  It is a simple way to get some of the functionality of https://github.com/symfony/recipes-contrib but is a bit easier to set up, since the bundle configuration is in the bundle itself, rather than a separate repo.
 
@@ -23,7 +17,7 @@ for more information on why this plugin was originally created.
 composer config allow-plugins.survos/installer true
 
 # dev
-composer config repositories.survos_installer '{"type": "path", "url": "/home/tac/g/sites/installer"}' 
+composer config repositories.survos_installer '{"type": "path", "url": "/home/tac/sites/installer"}' 
 composer require survos/installer:*@dev
 ```
 
