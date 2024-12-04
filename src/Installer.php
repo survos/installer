@@ -7,11 +7,13 @@ namespace Endroid\Installer;
 use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
+use Composer\Plugin\Capability\CommandProvider;
+use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
 use Composer\Script\Event;
 use Composer\Script\ScriptEvents;
 
-final class Installer implements PluginInterface, EventSubscriberInterface
+final class Installer implements PluginInterface, EventSubscriberInterface, Capable, CommandProvider
 {
     private const PROJECT_TYPE_ALL = 'all';
 
@@ -128,8 +130,10 @@ final class Installer implements PluginInterface, EventSubscriberInterface
             }
             $manifestPath = $packagePath.DIRECTORY_SEPARATOR.'.install'.DIRECTORY_SEPARATOR.'manifest.json';
 
+            dd($manifestPath);
             if (file_exists($manifestPath)) {
                 $this->io->write($manifestPath);
+
             }
             if (file_exists($sourcePath)) {
                 $this->io->write('<info>Installing package "'.$package->getName(). " $sourcePath</>");
@@ -195,4 +199,16 @@ final class Installer implements PluginInterface, EventSubscriberInterface
         copy($source, $target);
         @chmod($target, fileperms($target) | (fileperms($source) & 0111));
     }
+
+
+    public function getCapabilities(): array
+    {
+        return [CommandProvider::class => self::class];
+    }
+
+    public function getCommands(): array
+    {
+        return [new ListMetadataCommand()];
+    }
+
 }
