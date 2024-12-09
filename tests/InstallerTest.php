@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Endroid\Installer\Tests;
+namespace Survos\Installer\Tests;
 
 use PHPUnit\Framework\TestCase;
 

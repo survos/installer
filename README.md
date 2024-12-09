@@ -58,12 +58,12 @@ auto installed you can specify this via your composer.json.
 
 ```
 "extra": {
-    "endroid": {
+    "survos": {
         "installer": {
             "enabled": false,
             "exclude": [
-                "endroid/asset",
-                "endroid/embed"
+                "survos/asset",
+                "survos/embed"
             ]
         }
     }

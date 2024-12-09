@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Endroid\Installer;
+namespace Survos\Installer;
 
 use Composer\Command\BaseCommand;
 use Symfony\Component\Console\Helper\Table;

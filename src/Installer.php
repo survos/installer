@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Endroid\Installer;
+namespace Survos\Installer;
 
 use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
@@ -56,12 +56,12 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
     public function install(Event $event): void
     {
-        $this->io->write('<warning>Endroid Installer about to install! ' . $event->getName() . '</>');
+        $this->io->write('<warning>Survos Installer about to install! ' . $event->getName() . '</>');
         $foundCompatibleProjectType = false;
         foreach ($this->projectTypes as $projectType => $paths) {
             if ($this->isCompatibleProjectType($paths)) {
                 if (self::PROJECT_TYPE_ALL !== $projectType) {
-                    $this->io->write('<info>Endroid Installer detected project type "'.$projectType.'"</>');
+                    $this->io->write('<info>Survos Installer detected project type "'.$projectType.'"</>');
                     $foundCompatibleProjectType = true;
                 }
                 $this->installProjectType($projectType);
@@ -69,7 +69,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         }
 
         if (!$foundCompatibleProjectType) {
-            $this->io->write('<info>Endroid Installer did not detect a specific framework for auto-configuration</>');
+            $this->io->write('<info>Survos Installer did not detect a specific framework for auto-configuration</>');
         }
     }
 
@@ -87,7 +87,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
     private function installProjectType(string $projectType): void
     {
-        $exclude = $this->composer->getPackage()->getExtra()['endroid']['installer']['exclude'] ?? [];
+        $exclude = $this->composer->getPackage()->getExtra()['survos']['installer']['exclude'] ?? [];
 
         $processedPackages = [];
         $packages = $this->composer->getRepositoryManager()->getLocalRepository()->getPackages();

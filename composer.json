@@ -1,13 +1,9 @@
 {
     "name": "survos/installer",
     "type": "composer-plugin",
-    "description": "Composer plugin for installing configuration files and updating .env and .gitignore",
+    "description": "Composer plugin for installing configuration files and updating .env and .gitignore, based on survos/installer",
     "license": "MIT",
     "authors": [
-        {
-            "name": "Jeroen van den Enden",
-            "email": "info@endroid.nl"
-        },
         {
             "name": "Tac Tacelosky",
             "email": "tacman@gmail.com"
@@ -20,21 +16,21 @@
     },
     "require-dev": {
         "composer/composer": "^2.0",
-        "endroid/quality": "dev-main"
+        "survos/quality": "dev-main"
     },
     "suggest": {
         "roave/security-advisories": "Avoids installation of package versions with vulnerabilities"
     },
     "autoload": {
         "psr-4": {
-            "Endroid\\Installer\\": "src"
+            "Survos\\Installer\\": "src"
         }
     },
     "extra": {
         "branch-alias": {
             "dev-main": "1.x-dev"
         },
-        "class": "Endroid\\Installer\\Installer"
+        "class": "Survos\\Installer\\Installer"
     },
     "config": {
         "sort-packages": true,
