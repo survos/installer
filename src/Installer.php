@@ -131,8 +131,8 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
                 $this->io->warning("Missing $postInstallPath");
             }
             $manifestPath = $packagePath.DIRECTORY_SEPARATOR.'.install'.DIRECTORY_SEPARATOR.'manifest.json';
+            return;
 
-            dd($manifestPath);
             if (file_exists($manifestPath)) {
                 $this->io->write($manifestPath);
 
