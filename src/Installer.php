@@ -22,8 +22,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
     /** @var array<string, array<string>> */
     private array $projectTypes = [
-        self::PROJECT_TYPE_ALL => [],
-        'symfony' => [
+        'recipe' => [
             'config/packages',
             'public',
         ],
@@ -98,31 +97,39 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
             // Check for installation files and install
             $packagePath = $this->composer->getInstallationManager()->getInstallPath($package);
-            $sourcePath = $packagePath.DIRECTORY_SEPARATOR.'.install'.DIRECTORY_SEPARATOR.$projectType;
-            if (!file_exists($sourcePath)) {
+            $sourcePath = $packagePath.DIRECTORY_SEPARATOR.$projectType;
+            if (!str_contains($sourcePath, 'survos')) {
                 continue;
             }
+            if (!file_exists($sourcePath)) {
+                $this->io->error($sourcePath); die();
+                continue;
+            }
+            $this->io->warning($sourcePath);
 
             // Avoid handling duplicates: getPackages sometimes returns duplicates
+            $this->io->write($sourcePath);
             if (in_array($package->getName(), $processedPackages)) {
+                $this->io->error($package->getName() . "  already processed "); die();
                 continue;
             }
 
             if (in_array($package->getName(), $alreadyInstalled)) {
                 $this->io->write('- Skipping <info>'.$package->getName().', already installed</>');
-                continue;
+//                continue;
             }
             $processedPackages[] = $package->getName();
 
             // Skip excluded packages
             if (in_array($package->getName(), $exclude)) {
                 $this->io->write('- Skipping <info>'.$package->getName().'</>');
-                continue;
+//                continue;
             }
 
 
-            $this->insertIntoFile($package->getName(), $sourcePath . '/env.txt', '.env');
-            $this->insertIntoFile($package->getName(), $sourcePath . '/gitignore.txt', '.gitignore');
+//            $this->io->write($sourcePath); die();
+//            $this->insertIntoFile($package->getName(), $sourcePath . '/env.txt', '.env');
+//            $this->insertIntoFile($package->getName(), $sourcePath . '/gitignore.txt', '.gitignore');
 
             if (file_exists($postInstallPath = $sourcePath . '/post-install.txt')) {
                 $content = file_get_contents($postInstallPath);
@@ -130,7 +137,8 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             } else {
                 $this->io->warning("Missing $postInstallPath");
             }
-            $manifestPath = $packagePath.DIRECTORY_SEPARATOR.'.install'.DIRECTORY_SEPARATOR.'manifest.json';
+            $manifestPath = $packagePath.DIRECTORY_SEPARATOR.'manifest.yaml';
+            die($manifestPath);
             return;
 
             if (file_exists($manifestPath)) {

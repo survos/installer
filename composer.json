@@ -15,8 +15,7 @@
         "composer-plugin-api": "^2.0"
     },
     "require-dev": {
-        "composer/composer": "^2.0",
-        "survos/quality": "dev-main"
+        "composer/composer": "^2.0"
     },
     "suggest": {
         "roave/security-advisories": "Avoids installation of package versions with vulnerabilities"
@@ -36,6 +35,12 @@
         "sort-packages": true,
         "allow-plugins": {
             "survos/installer": true
+        }
+    },
+    "repositories": {
+        "survos_installer": {
+            "type": "path",
+            "url": "/home/tac/g/sites/installer"
         }
     }
 }
