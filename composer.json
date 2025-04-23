@@ -36,11 +36,5 @@
         "allow-plugins": {
             "survos/installer": true
         }
-    },
-    "repositories": {
-        "survos_installer": {
-            "type": "path",
-            "url": "/home/tac/g/sites/installer"
-        }
     }
 }
