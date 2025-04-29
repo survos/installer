@@ -67,7 +67,13 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
     }
 
     private function processInstall(PackageEvent $event) {
-        $package = $event->getOperation()->getPackage();
+        $operation = $event->getOperation();
+        if (method_exists($operation, 'getPackage')) {
+            $package = $operation->getPackage();
+        } else {
+            $this->io->write('<error>Unable to retrieve package from operation.</error>');
+            return;
+        }
         $packageName = $package->getName();
         $installPath = $this->composer->getInstallationManager()->getInstallPath($package);
 
