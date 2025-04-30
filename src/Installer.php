@@ -13,6 +13,8 @@ use Composer\Plugin\PluginInterface;
 use Composer\Script\Event;
 use Composer\Installer\PackageEvent;
 use Composer\Script\ScriptEvents;
+use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\Finder\Finder;
 
 final class Installer implements PluginInterface, EventSubscriberInterface, Capable, CommandProvider {
     private const PROJECT_TYPE_ALL = 'all';
@@ -100,6 +102,50 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             $this->io->write("\n<comment>Post-install message from {$packageName}:</comment>");
             $this->io->write(file_get_contents($postInstall));
         }
+
+        // check if package have manifest file and extarct it s content
+        $manifestPath = $installPath . '/.install/manifest.yaml';
+        if (file_exists($manifestPath)) {
+            $this->io->write("<info>Applying manifest from {$packageName}</info>");
+            // Parse YAML file
+            $yamlContent = Yaml::parseFile($manifestPath);
+            // Work with the parsed data
+            //print_r($yamlContent);
+        }
+
+        //search for yaml files in the package in the folder .install/symfony in all subfolders and copy them to the project keeping their same path
+        $yamlFiles = [];
+        //make sure $installPath . '/.install/symfony' exists
+        if (file_exists($installPath . '/.install/symfony')) {
+            $finder = new Finder();
+            $finder->files()
+                ->in($installPath . '/.install/symfony')
+                ->name('*.yaml')
+                ->name('*.yml');
+
+            
+            foreach ($finder as $file) {
+                $yamlFiles[] = $file->getRealPath();
+            }
+        }
+
+        foreach ($yamlFiles as $yamlFile) {
+            $targetPath = str_replace($installPath . '/.install/', '', $yamlFile);
+            //remove symfony/ from the path
+            $targetPath = str_replace('symfony/', '', $targetPath);
+            //file in target path must not exist
+            if (file_exists($targetPath)) {
+                $this->io->write("<error>File {$targetPath} already exists. Skipping copy.</error>");
+                continue;
+            }
+            //if target path does not exist, create the directory
+            if (!file_exists($targetPath)) {
+                mkdir(dirname($targetPath), 0777, true);
+            }
+            copy($yamlFile, $targetPath);
+            $this->io->write("<info> Copying {$yamlFile} to {$targetPath}</info>");
+        }
+
     }
 
     private function applyLinesToFile(string $sourceFile, string $targetFile): void {

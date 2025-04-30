@@ -12,7 +12,9 @@
     ],
     "require": {
         "php": "^8.2",
-        "composer-plugin-api": "^2.0"
+        "composer-plugin-api": "^2.0",
+        "symfony/finder": "^7.2",
+        "symfony/yaml": "^7.2"
     },
     "require-dev": {
         "composer/composer": "^2.0"
