@@ -51,7 +51,7 @@ for more information on why this plugin was originally created.
 composer config allow-plugins.survos/installer true
 
 # dev
-composer config repositories.survos_installer '{"type": "path", "url": "/home/tac/g/sites/installer"}' 
+composer config repositories.survos_installer '{"type": "path", "url": "../installer"}' 
 composer require survos/installer:*@dev
 ```
 
