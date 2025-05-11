@@ -73,7 +73,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         if (method_exists($operation, 'getPackage')) {
             $package = $operation->getPackage();
         } else {
-            $this->io->write('<error>Unable to retrieve package from operation.</error>');
+//            $this->io->warning('Unable to retrieve package from operation');
             return;
         }
         $packageName = $package->getName();
@@ -123,7 +123,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
                 ->name('*.yaml')
                 ->name('*.yml');
 
-            
+
             foreach ($finder as $file) {
                 $yamlFiles[] = $file->getRealPath();
             }
@@ -186,7 +186,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
     }
 
-    
+
 
     public function install(Event $event): void {
         $this->io->write('<warning>Survos Installer about to install! ' . $event->getName() . '</>');
