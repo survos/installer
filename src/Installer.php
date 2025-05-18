@@ -33,7 +33,9 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
     public function activate(Composer $composer, IOInterface $io): void {
         $this->composer = $composer;
         $this->io = $io;
-        $io->write('<warning>Activating installation...</warning>');
+        if ($io->isVeryVerbose()) {
+            $io->write('<warning>Activating installation...</warning>');
+        }
     }
 
     public function deactivate(Composer $composer, IOInterface $io): void {
