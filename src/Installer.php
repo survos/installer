@@ -139,8 +139,12 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
                 continue;
             }
             //if target path does not exist, create the directory
-            if (!file_exists($targetPath)) {
-                mkdir(dirname($targetPath), 0777, true);
+            if (!is_dir(dirname($targetPath))) {
+                try {
+                    mkdir(dirname($targetPath), 0777, true);
+                } catch (\Exception $e) {
+                    $this->io->error("Error creating " . dirname($targetPath). "\n\n" . $e->getMessage());
+                }
             }
             copy($yamlFile, $targetPath);
             $this->io->write("<info> Copying {$yamlFile} to {$targetPath}</info>");
