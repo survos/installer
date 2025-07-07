@@ -4,7 +4,7 @@
 
 This plugin was forked from https://github.com/endroid/installer, and functionality to update the .env and .gitignore files was added.  It is a simple way to get some of the functionality of https://github.com/symfony/recipes-contrib but is a bit easier to set up, since the bundle configuration is in the bundle itself, rather than a separate repo.
 
-In short, this utility modifies the application when a bundle is installed by reading the .install/symfony directory and
+In short, this utility modifies the application when a bundle is installed by reading the .installer/symfony directory and
 
 * copy the config/packages/<bundle>.yaml and config/routes/<bundle>.yaml files.
 * add env.txt to .env
@@ -64,7 +64,7 @@ composer require survos/installer
 ## Usage
 
 Add the configuration files you want to be copied upon installation and update
-of the package to the .install directory in the root of your package. The files
+of the package to the .installer directory in the root of your package. The files
 will be copied to the corresponding directories in the project.
 
 It tried to use the same structure as the Symfony recipes-config, in the recipe folder at the root of a bundle.

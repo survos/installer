@@ -82,10 +82,12 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         $installPath = $this->composer->getInstallationManager()->getInstallPath($package);
 
         //reference files paths
-        $env = $installPath . '/.install/symfony/env.txt';
-        $gitignore = $installPath . '/.install/symfony/gitignore.txt';
-        $postInstall = $installPath . '/.install/symfony/post-install.txt';
+        $env = $installPath . '/.installer/symfony/env.txt';
+        $gitignore = $installPath . '/.installer/symfony/gitignore.txt';
+        $postInstall = $installPath . '/.installer/symfony/post-install.txt';
 
+        $this->io->write("<error>NARO Simple install done for {$packageName}</error>");
+        
         //.env
         if (file_exists($env)) {
             $this->io->write("<info>Applying env from {$packageName}</info>");
@@ -105,8 +107,11 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             $this->io->write(file_get_contents($postInstall));
         }
 
+        //io print : simple install done
+        $this->io->write("<error>Simple install done for {$packageName}</error>");
+
         // check if package have manifest file and extarct it s content
-        $manifestPath = $installPath . '/.install/manifest.yaml';
+        $manifestPath = $installPath . '/.installer/manifest.yaml';
         if (file_exists($manifestPath)) {
             $this->io->write("<info>Applying manifest from {$packageName}</info>");
             // Parse YAML file
@@ -115,13 +120,13 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             //print_r($yamlContent);
         }
 
-        //search for yaml files in the package in the folder .install/symfony in all subfolders and copy them to the project keeping their same path
+        //search for yaml files in the package in the folder .installer/symfony in all subfolders and copy them to the project keeping their same path
         $yamlFiles = [];
-        //make sure $installPath . '/.install/symfony' exists
-        if (file_exists($installPath . '/.install/symfony')) {
+        //make sure $installPath . '/.installer/symfony' exists
+        if (file_exists($installPath . '/.installer/symfony')) {
             $finder = new Finder();
             $finder->files()
-                ->in($installPath . '/.install/symfony')
+                ->in($installPath . '/.installersymfony')
                 ->name('*.yaml')
                 ->name('*.yml');
 
@@ -132,7 +137,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         }
 
         foreach ($yamlFiles as $yamlFile) {
-            $targetPath = str_replace($installPath . '/.install/', '', $yamlFile);
+            $targetPath = str_replace($installPath . '/.installer/', '', $yamlFile);
             //remove symfony/ from the path
             $targetPath = str_replace('symfony/', '', $targetPath);
             //file in target path must not exist
@@ -171,6 +176,10 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
     private function applyEnvVars(string $sourceFile, string $targetFile,string $packageName) : void
     {
+        //io print source and target file
+        $this->io->write("<info>Source file: $sourceFile</info>");
+        $this->io->write("<info>Target file: $targetFile</info>");
+
         $newVars = file($sourceFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if (!file_exists($targetFile)) {
             file_put_contents($targetFile, '');
@@ -213,6 +222,10 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
     }
 
     private function writeScopedBlock(string $sourceFile, string $targetFile, string $packageName): void {
+        //io print source and target file
+        $this->io->write("<info>Source file: $sourceFile</info>");
+        $this->io->write("<info>Target file: $targetFile</info>");
+
         $newLines = file($sourceFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if (empty($newLines)) {
             return;
@@ -309,12 +322,12 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             //            $this->insertIntoFile($package->getName(), $sourcePath . '/env.txt', '.env');
             //            $this->insertIntoFile($package->getName(), $sourcePath . '/gitignore.txt', '.gitignore');
 
-            if (file_exists($postInstallPath = $sourcePath . '/post-install.txt')) {
-                $content = file_get_contents($postInstallPath);
-                $this->io->write($content);
-            } else {
-                $this->io->warning("Missing $postInstallPath");
-            }
+            // if (file_exists($postInstallPath = $sourcePath . '/post-install.txt')) {
+            //     $content = file_get_contents($postInstallPath);
+            //     $this->io->write($content);
+            // } else {
+            //     $this->io->warning("Missing $postInstallPath");
+            // }
             $manifestPath = $packagePath . DIRECTORY_SEPARATOR . 'manifest.yaml';
             die($manifestPath);
             return;
@@ -357,20 +370,20 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($sourcePath, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
 
         /** @var \SplFileInfo $fileInfo */
-        foreach ($iterator as $fileInfo) {
-            $target = $targetPath . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
-            if ($fileInfo->isDir()) {
-                if (!is_dir($target)) {
-                    mkdir($target);
-                }
-            } elseif (!file_exists($target)) {
-                // hack
-                if (pathinfo($target, PATHINFO_EXTENSION) !== 'txt') {
-                    $this->copyFile($fileInfo->getPathname(), $target);
-                    $changed = true;
-                }
-            }
-        }
+        // foreach ($iterator as $fileInfo) {
+        //     $target = $targetPath . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+        //     if ($fileInfo->isDir()) {
+        //         if (!is_dir($target)) {
+        //             mkdir($target);
+        //         }
+        //     } elseif (!file_exists($target)) {
+        //         // hack
+        //         if (pathinfo($sourcePath, PATHINFO_EXTENSION) !== 'txt') {
+        //             $this->copyFile($fileInfo->getPathname(), $target);
+        //             $changed = true;
+        //         }
+        //     }
+        // }
 
         return $changed;
     }
