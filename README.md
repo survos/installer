@@ -52,7 +52,7 @@ composer config allow-plugins.survos/installer true
 
 # dev
 composer config repositories.survos_installer '{"type": "path", "url": "../installer"}' 
-composer require survos/installer:*@dev
+composer require survos/installer:dev-main
 ```
 
 Production
