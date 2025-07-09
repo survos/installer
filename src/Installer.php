@@ -87,7 +87,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         $postInstall = $installPath . '/.installer/symfony/post-install.txt';
 
         $this->io->write("<error>NARO Simple install done for {$packageName}</error>");
-        
+
         //.env
         if (file_exists($env)) {
             $this->io->write("<info>Applying env from {$packageName}</info>");
@@ -126,7 +126,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         if (file_exists($installPath . '/.installer/symfony')) {
             $finder = new Finder();
             $finder->files()
-                ->in($installPath . '/.installersymfony')
+                ->in($installPath . '/.installer/symfony')
                 ->name('*.yaml')
                 ->name('*.yml');
 
