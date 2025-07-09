@@ -11,10 +11,10 @@
 
     ],
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "composer-plugin-api": "^2.0",
-        "symfony/finder": "^7.2",
-        "symfony/yaml": "^7.2"
+        "symfony/finder": "^7.3",
+        "symfony/yaml": "^7.3"
     },
     "require-dev": {
         "composer/composer": "^2.0"
@@ -31,7 +31,10 @@
         "branch-alias": {
             "dev-main": "1.x-dev"
         },
-        "class": "Survos\\Installer\\Installer"
+        "class": "Survos\\Installer\\Installer",
+        "symfony": {
+            "require": "^7.3"
+        }
     },
     "config": {
         "sort-packages": true,
