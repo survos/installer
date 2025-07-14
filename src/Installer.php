@@ -86,8 +86,6 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         $gitignore = $installPath . '/.installer/symfony/gitignore.txt';
         $postInstall = $installPath . '/.installer/symfony/post-install.txt';
 
-        $this->io->write("<error>NARO Simple install done for {$packageName}</error>");
-
         //.env
         if (file_exists($env)) {
             $this->io->write("<info>Applying env from {$packageName}</info>");
