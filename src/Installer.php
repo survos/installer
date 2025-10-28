@@ -86,9 +86,10 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         $gitignore = $installPath . '/.installer/symfony/gitignore.txt';
         $postInstall = $installPath . '/.installer/symfony/post-install.txt';
 
-        $this->io->write("<error>NARO Simple install done for {$packageName}</error>");
+        $this->io->write("<error>Survos Simple install done for {$packageName}</error>");
 
         //.env
+        dump($env, file_exists($env));
         if (file_exists($env)) {
             $this->io->write("<info>Applying env from {$packageName}</info>");
             $this->applyEnvVars($env, getcwd() . '/.env', $packageName);
@@ -141,6 +142,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             //remove symfony/ from the path
             $targetPath = str_replace('symfony/', '', $targetPath);
             //file in target path must not exist
+            dump(from: $yamlFile, to: $targetPath, content: file_get_contents($yamlFile));
             if (file_exists($targetPath)) {
                 $this->io->write("<error>File {$targetPath} already exists. Skipping copy.</error>");
                 continue;
@@ -176,6 +178,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
     private function applyEnvVars(string $sourceFile, string $targetFile,string $packageName) : void
     {
+//        dd($sourceFile, $targetFile, $packageName);
         //io print source and target file
         $this->io->write("<info>Source file: $sourceFile</info>");
         $this->io->write("<info>Target file: $targetFile</info>");

@@ -13,8 +13,8 @@
     "require": {
         "php": "^8.3",
         "composer-plugin-api": "^2.0",
-        "symfony/finder": "^7.3",
-        "symfony/yaml": "^7.3"
+        "symfony/finder": "^7.3|^8.0",
+        "symfony/yaml": "^7.3|^8.0"
     },
     "require-dev": {
         "composer/composer": "^2.0"
@@ -33,7 +33,7 @@
         },
         "class": "Survos\\Installer\\Installer",
         "symfony": {
-            "require": "^7.3"
+            "require": "^7.3|^8.0"
         }
     },
     "config": {
