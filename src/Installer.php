@@ -88,7 +88,6 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         $this->io->write("<error>Survos Simple install done for {$packageName}</error>");
 
         //.env
-        dump($env, file_exists($env));
         if (file_exists($env)) {
             $this->applyEnvVars($env, getcwd() . '/.env', $packageName);
         }
