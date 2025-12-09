@@ -61,6 +61,9 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
     public function onPackageInstall(PackageEvent $event)
     {
+        if ($this->io->isVeryVerbose()) {
+            $this->io->write('<warning>Survos Installer about to install! ' . $event->getName() . '</>');
+        }
         $this->processInstall($event);
     }
 
@@ -81,11 +84,9 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         $installPath = $this->composer->getInstallationManager()->getInstallPath($package);
 
         //reference files paths
-        $env = $installPath . '/.installer/symfony/env.txt';
-        $gitignore = $installPath . '/.installer/symfony/gitignore.txt';
-        $postInstall = $installPath . '/.installer/symfony/post-install.txt';
-
-        $this->io->write("<error>Survos Simple install done for {$packageName}</error>");
+        $env = $installPath . '/.install/symfony/env.txt';
+        $gitignore = $installPath . '/.install/symfony/gitignore.txt';
+        $postInstall = $installPath . '/.install/symfony/post-install.txt';
 
         //.env
         if (file_exists($env)) {
@@ -133,19 +134,16 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             //remove symfony/ from the path
             $targetPath = str_replace('symfony/', '', $targetPath);
             //file in target path must not exist
-            dump(from: $yamlFile, to: $targetPath, content: file_get_contents($yamlFile));
             if (file_exists($targetPath)) {
+                $this->io->write("<error>File {$targetPath} already exists. Skipping copy.</error>");
                 continue;
             }
             //if target path does not exist, create the directory
-            if (!is_dir(dirname($targetPath))) {
-                try {
-                    mkdir(dirname($targetPath), 0777, true);
-                } catch (\Exception $e) {
-                    $this->io->error("Error creating " . dirname($targetPath). "\n\n" . $e->getMessage());
-                }
+            if (!file_exists($targetPath)) {
+                mkdir(dirname($targetPath), 0777, true);
             }
             copy($yamlFile, $targetPath);
+            $this->io->write("<info> Copying {$yamlFile} to {$targetPath}</info>");
         }
 
     }
@@ -167,10 +165,6 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
     private function applyEnvVars(string $sourceFile, string $targetFile,string $packageName) : void
     {
-        //io print source and target file
-        $this->io->write("<info>Source file: $sourceFile</info>");
-        $this->io->write("<info>Target file: $targetFile</info>");
-
         $newVars = file($sourceFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if (!file_exists($targetFile)) {
             file_put_contents($targetFile, '');
@@ -195,10 +189,12 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
 
     public function install(Event $event): void {
+        $this->io->write('<warning>Survos Installer about to install! ' . $event->getName() . '</>');
         $foundCompatibleProjectType = false;
         foreach ($this->projectTypes as $projectType => $paths) {
             if ($this->isCompatibleProjectType($paths)) {
                 if (self::PROJECT_TYPE_ALL !== $projectType) {
+                    $this->io->write('<info>Survos Installer detected project type "' . $projectType . '"</>');
                     $foundCompatibleProjectType = true;
                 }
                 $this->installProjectType($projectType);
@@ -206,7 +202,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         }
 
         if (!$foundCompatibleProjectType) {
-            //$this->io->write('<info>Survos Installer did not detect a specific framework for auto-configuration</>');
+            $this->io->write('<info>Survos Installer did not detect a specific framework for auto-configuration</>');
         }
     }
 
@@ -280,8 +276,10 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
                 die();
                 continue;
             }
+            $this->io->warning($sourcePath);
 
             // Avoid handling duplicates: getPackages sometimes returns duplicates
+            $this->io->write($sourcePath);
             if (in_array($package->getName(), $processedPackages)) {
                 $this->io->error($package->getName() . "  already processed ");
                 die();
@@ -289,13 +287,14 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             }
 
             if (in_array($package->getName(), $alreadyInstalled)) {
-                //$this->io->write('- Skipping <info>' . $package->getName() . ', already installed</>');
+                $this->io->write('- Skipping <info>' . $package->getName() . ', already installed</>');
                 //                continue;
             }
             $processedPackages[] = $package->getName();
 
             // Skip excluded packages
             if (in_array($package->getName(), $exclude)) {
+                $this->io->write('- Skipping <info>' . $package->getName() . '</>');
                 //                continue;
             }
 
@@ -304,24 +303,24 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             //            $this->insertIntoFile($package->getName(), $sourcePath . '/env.txt', '.env');
             //            $this->insertIntoFile($package->getName(), $sourcePath . '/gitignore.txt', '.gitignore');
 
-            // if (file_exists($postInstallPath = $sourcePath . '/post-install.txt')) {
-            //     $content = file_get_contents($postInstallPath);
-            //     $this->io->write($content);
-            // } else {
-            //     $this->io->warning("Missing $postInstallPath");
-            // }
+            if (file_exists($postInstallPath = $sourcePath . '/post-install.txt')) {
+                $content = file_get_contents($postInstallPath);
+                $this->io->write($content);
+            } else {
+                $this->io->warning("Missing $postInstallPath");
+            }
             $manifestPath = $packagePath . DIRECTORY_SEPARATOR . 'manifest.yaml';
             die($manifestPath);
             return;
 
             if (file_exists($manifestPath)) {
-                //$this->io->write($manifestPath);
+                $this->io->write($manifestPath);
             }
             if (file_exists($sourcePath)) {
-                //$this->io->write('<info>Installing package "' . $package->getName() . " $sourcePath</>");
+                $this->io->write('<info>Installing package "' . $package->getName() . " $sourcePath</>");
                 $changed = $this->copy($sourcePath, (string) getcwd());
                 if ($changed) {
-                    //$this->io->write('- Configured <info>' . $package->getName() . '</>');
+                    $this->io->write('- Configured <info>' . $package->getName() . '</>');
                 }
             }
         }
@@ -334,7 +333,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             // look for existing .env section
             $key = sprintf('###> %s ###', $packageName);
             if (!str_contains($existing, $key)) {
-                //$this->io->write("<warning>inserting $sourcePath to $targetPath</warning>");
+                $this->io->write("<warning>inserting $sourcePath to $targetPath</warning>");
                 $existing .= "\n\n$key\n" . $sourceToInsert .
                     sprintf('###< %s ###', $packageName) . "\n";
                 file_put_contents($targetPath, $existing);
@@ -345,27 +344,27 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
     }
 
     private function copy(string $sourcePath, string $targetPath): bool {
-        //$this->io->write("- Copying $sourcePath to $targetPath <info></>");
+        $this->io->write("- Copying $sourcePath to $targetPath <info></>");
         $changed = false;
 
         /** @var \RecursiveDirectoryIterator $iterator */
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($sourcePath, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
 
         /** @var \SplFileInfo $fileInfo */
-        // foreach ($iterator as $fileInfo) {
-        //     $target = $targetPath . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
-        //     if ($fileInfo->isDir()) {
-        //         if (!is_dir($target)) {
-        //             mkdir($target);
-        //         }
-        //     } elseif (!file_exists($target)) {
-        //         // hack
-        //         if (pathinfo($sourcePath, PATHINFO_EXTENSION) !== 'txt') {
-        //             $this->copyFile($fileInfo->getPathname(), $target);
-        //             $changed = true;
-        //         }
-        //     }
-        // }
+        foreach ($iterator as $fileInfo) {
+            $target = $targetPath . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+            if ($fileInfo->isDir()) {
+                if (!is_dir($target)) {
+                    mkdir($target);
+                }
+            } elseif (!file_exists($target)) {
+                // hack
+                if (pathinfo($target, PATHINFO_EXTENSION) !== 'txt') {
+                    $this->copyFile($fileInfo->getPathname(), $target);
+                    $changed = true;
+                }
+            }
+        }
 
         return $changed;
     }
