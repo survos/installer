@@ -17,13 +17,17 @@
         "symfony/yaml": "^7.4|^8.0"
     },
     "require-dev": {
-        "composer/composer": "^2.0"
-    },
-    "suggest": {
+        "composer/composer": "^2.0",
+        "phpunit/phpunit": "^11.5|^12.0"
     },
     "autoload": {
         "psr-4": {
             "Survos\\Installer\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Survos\\Installer\\Tests\\": "tests"
         }
     },
     "extra": {
