@@ -10,26 +10,15 @@ use Composer\IO\IOInterface;
 use Composer\Plugin\Capability\CommandProvider;
 use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
-use Composer\Script\Event;
 use Composer\Installer\PackageEvent;
-use Composer\Script\ScriptEvents;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Finder\Finder;
 
 final class Installer implements PluginInterface, EventSubscriberInterface, Capable, CommandProvider {
-    private const PROJECT_TYPE_ALL = 'all';
-
     private Composer $composer;
     private IOInterface $io;
 
-    /** @var array<string, array<string>> */
-    private array $projectTypes = [
-        'recipe' => [
-            'config/packages',
-            'public',
-        ],
-    ];
-
+    #[\Override]
     public function activate(Composer $composer, IOInterface $io): void {
         $this->composer = $composer;
         $this->io = $io;
@@ -38,46 +27,38 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         }
     }
 
+    #[\Override]
     public function deactivate(Composer $composer, IOInterface $io): void {
     }
 
+    #[\Override]
     public function uninstall(Composer $composer, IOInterface $io): void {
     }
 
+    #[\Override]
     public static function getSubscribedEvents(): array {
-        //return [];
-        // return [
-        //     //   ScriptEvents::PRE_UPDATE_CMD => ['install', 1],
-        //     //     ScriptEvents::PRE_INSTALL_CMD => ['install', 1],
-        //     //    ScriptEvents::POST_INSTALL_CMD => ['install', 1],
-        //     //    ScriptEvents::POST_UPDATE_CMD => ['install', 1],
-        // ];
-
         return [
             'post-package-install' => 'onPackageInstall',
             'post-package-update' => 'onPackageUpdate',
         ];
     }
 
-    public function onPackageInstall(PackageEvent $event)
-    {
+    public function onPackageInstall(PackageEvent $event): void {
         if ($this->io->isVeryVerbose()) {
             $this->io->write('<warning>Survos Installer about to install! ' . $event->getName() . '</>');
         }
         $this->processInstall($event);
     }
 
-    public function onPackageUpdate(PackageEvent $event)
-    {
+    public function onPackageUpdate(PackageEvent $event): void {
         $this->processInstall($event);
     }
 
-    private function processInstall(PackageEvent $event) {
+    private function processInstall(PackageEvent $event): void {
         $operation = $event->getOperation();
         if (method_exists($operation, 'getPackage')) {
             $package = $operation->getPackage();
         } else {
-//            $this->io->warning('Unable to retrieve package from operation');
             return;
         }
         $packageName = $package->getName();
@@ -95,7 +76,6 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
         // .gitignore
         if (file_exists($gitignore)) {
-            //$this->applyLinesToFile($gitignore, getcwd() . '/.gitignore');
             $this->writeScopedBlock($gitignore, getcwd() . '/.gitignore', $packageName);
         }
 
@@ -104,7 +84,7 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             $this->io->write(file_get_contents($postInstall));
         }
 
-        // check if package have manifest file and extarct it s content
+        // check if package has a manifest file and extract its content
         $manifestPath = $installPath . '/.installer/manifest.yaml';
         if (file_exists($manifestPath)) {
             // Parse YAML file
@@ -145,26 +125,9 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
             copy($yamlFile, $targetPath);
             $this->io->write("<info> Copying {$yamlFile} to {$targetPath}</info>");
         }
-
     }
 
-    private function applyLinesToFile(string $sourceFile, string $targetFile): void {
-        $newLines = file($sourceFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if (!file_exists($targetFile)) {
-            file_put_contents($targetFile, '');
-        }
-
-        $existing = file($targetFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-        foreach ($newLines as $line) {
-            if (!in_array($line, $existing, true)) {
-                file_put_contents($targetFile, "$line\n", FILE_APPEND);
-            }
-        }
-    }
-
-    private function applyEnvVars(string $sourceFile, string $targetFile,string $packageName) : void
-    {
+    private function applyEnvVars(string $sourceFile, string $targetFile, string $packageName): void {
         $newVars = file($sourceFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if (!file_exists($targetFile)) {
             file_put_contents($targetFile, '');
@@ -174,35 +137,12 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
         $newContent = "";
         foreach ($newVars as $line) {
             if (!str_contains($existing, $line)) {
-                //file_put_contents($targetFile, "$line\n", FILE_APPEND);
                 $newContent .= "$line\n";
             }
         }
         if (!empty($newContent)) {
             //make it scoped
             $this->writeScopedBlock($sourceFile, $targetFile, $packageName);
-            //file_put_contents($targetFile, $newContent, FILE_APPEND);
-        }
-
-    }
-
-
-
-    public function install(Event $event): void {
-        $this->io->write('<warning>Survos Installer about to install! ' . $event->getName() . '</>');
-        $foundCompatibleProjectType = false;
-        foreach ($this->projectTypes as $projectType => $paths) {
-            if ($this->isCompatibleProjectType($paths)) {
-                if (self::PROJECT_TYPE_ALL !== $projectType) {
-                    $this->io->write('<info>Survos Installer detected project type "' . $projectType . '"</>');
-                    $foundCompatibleProjectType = true;
-                }
-                $this->installProjectType($projectType);
-            }
-        }
-
-        if (!$foundCompatibleProjectType) {
-            $this->io->write('<info>Survos Installer did not detect a specific framework for auto-configuration</>');
         }
     }
 
@@ -221,163 +161,10 @@ final class Installer implements PluginInterface, EventSubscriberInterface, Capa
 
         $content = file_get_contents($targetFile);
 
-        // Remove existing block
-        // $pattern = "/###> {$packageName} ###.*?###< {$packageName} ###\n?/s";
-        // $content = preg_replace($pattern, '', $content);
-
         // Append new block
         $block = $blockStart . "\n" . implode("\n", $newLines) . "\n" . $blockEnd . "\n";
         file_put_contents($targetFile, rtrim($content) . "\n\n" . $block);
     }
-
-    private function removeScopedBlock(string $targetFile, string $packageName): void {
-        if (!file_exists($targetFile)) {
-            return;
-        }
-
-        $content = file_get_contents($targetFile);
-        $pattern = "/###> {$packageName} ###.*?###< {$packageName} ###\n?/s";
-        $newContent = preg_replace($pattern, '', $content);
-
-        file_put_contents($targetFile, trim($newContent) . "\n");
-    }
-
-
-
-    /** @param array<string> $paths */
-    private function isCompatibleProjectType(array $paths): bool {
-        foreach ($paths as $path) {
-            if (!file_exists(getcwd() . DIRECTORY_SEPARATOR . $path)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private function installProjectType(string $projectType): void {
-        $exclude = $this->composer->getPackage()->getExtra()['survos']['installer']['exclude'] ?? [];
-
-        $processedPackages = [];
-        $packages = $this->composer->getRepositoryManager()->getLocalRepository()->getPackages();
-        $alreadyInstalled = file_exists('symfony.lock')
-            ? array_keys(json_decode(file_get_contents('symfony.lock'), true)) : [];
-
-        foreach ($packages as $package) {
-
-            // Check for installation files and install
-            $packagePath = $this->composer->getInstallationManager()->getInstallPath($package);
-            $sourcePath = $packagePath . DIRECTORY_SEPARATOR . $projectType;
-            if (!str_contains($sourcePath, 'survos')) {
-                continue;
-            }
-            if (!file_exists($sourcePath)) {
-                $this->io->error($sourcePath);
-                die();
-                continue;
-            }
-            $this->io->warning($sourcePath);
-
-            // Avoid handling duplicates: getPackages sometimes returns duplicates
-            $this->io->write($sourcePath);
-            if (in_array($package->getName(), $processedPackages)) {
-                $this->io->error($package->getName() . "  already processed ");
-                die();
-                continue;
-            }
-
-            if (in_array($package->getName(), $alreadyInstalled)) {
-                $this->io->write('- Skipping <info>' . $package->getName() . ', already installed</>');
-                //                continue;
-            }
-            $processedPackages[] = $package->getName();
-
-            // Skip excluded packages
-            if (in_array($package->getName(), $exclude)) {
-                $this->io->write('- Skipping <info>' . $package->getName() . '</>');
-                //                continue;
-            }
-
-
-            //            $this->io->write($sourcePath); die();
-            //            $this->insertIntoFile($package->getName(), $sourcePath . '/env.txt', '.env');
-            //            $this->insertIntoFile($package->getName(), $sourcePath . '/gitignore.txt', '.gitignore');
-
-            if (file_exists($postInstallPath = $sourcePath . '/post-install.txt')) {
-                $content = file_get_contents($postInstallPath);
-                $this->io->write($content);
-            } else {
-                $this->io->warning("Missing $postInstallPath");
-            }
-            $manifestPath = $packagePath . DIRECTORY_SEPARATOR . 'manifest.yaml';
-            die($manifestPath);
-            return;
-
-            if (file_exists($manifestPath)) {
-                $this->io->write($manifestPath);
-            }
-            if (file_exists($sourcePath)) {
-                $this->io->write('<info>Installing package "' . $package->getName() . " $sourcePath</>");
-                $changed = $this->copy($sourcePath, (string) getcwd());
-                if ($changed) {
-                    $this->io->write('- Configured <info>' . $package->getName() . '</>');
-                }
-            }
-        }
-    }
-
-    private function insertIntoFile(string $packageName, string $sourcePath, string $targetPath): void {
-        if (file_exists($sourcePath)) {
-            $sourceToInsert = file_get_contents($sourcePath);
-            $existing = file_get_contents($targetPath);
-            // look for existing .env section
-            $key = sprintf('###> %s ###', $packageName);
-            if (!str_contains($existing, $key)) {
-                $this->io->write("<warning>inserting $sourcePath to $targetPath</warning>");
-                $existing .= "\n\n$key\n" . $sourceToInsert .
-                    sprintf('###< %s ###', $packageName) . "\n";
-                file_put_contents($targetPath, $existing);
-            }
-        } else {
-            $this->io->warning("Missing $sourcePath");
-        }
-    }
-
-    private function copy(string $sourcePath, string $targetPath): bool {
-        $this->io->write("- Copying $sourcePath to $targetPath <info></>");
-        $changed = false;
-
-        /** @var \RecursiveDirectoryIterator $iterator */
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($sourcePath, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
-
-        /** @var \SplFileInfo $fileInfo */
-        foreach ($iterator as $fileInfo) {
-            $target = $targetPath . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
-            if ($fileInfo->isDir()) {
-                if (!is_dir($target)) {
-                    mkdir($target);
-                }
-            } elseif (!file_exists($target)) {
-                // hack
-                if (pathinfo($target, PATHINFO_EXTENSION) !== 'txt') {
-                    $this->copyFile($fileInfo->getPathname(), $target);
-                    $changed = true;
-                }
-            }
-        }
-
-        return $changed;
-    }
-
-    public function copyFile(string $source, string $target): void {
-        if (file_exists($target)) {
-            return;
-        }
-
-        copy($source, $target);
-        @chmod($target, fileperms($target) | (fileperms($source) & 0111));
-    }
-
 
     public function getCapabilities(): array {
         return [CommandProvider::class => self::class];

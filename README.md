@@ -1,145 +1,132 @@
-# Installer
+# survos/installer
 
 *By [survos](https://github.com/survos)*
 
-This plugin was forked from https://github.com/endroid/installer, and functionality to update the .env and .gitignore files was added.  It is a simple way to get some of the functionality of https://github.com/symfony/recipes-contrib but is a bit easier to set up, since the bundle configuration is in the bundle itself, rather than a separate repo.
+A Composer plugin that applies a bundle's **recipe** to the host project on
+install/update, and reverses it on removal — a lightweight, in-bundle stand-in
+for [symfony/recipes-contrib](https://github.com/symfony/recipes-contrib).
 
-In short, this utility modifies the application when a bundle is installed by reading the .installer/symfony directory and
+Forked from [endroid/installer](https://github.com/endroid/installer), which
+only copies files. This fork adds the rest of what a Flex recipe does: merging
+`.env` and `.gitignore`, printing post-install notes, and undoing all of it when
+the package is removed.
 
-* copy the config/packages/<bundle>.yaml and config/routes/<bundle>.yaml files.
-* add env.txt to .env
-* add from gitignore.txt to .gitignore
-* display the post-install contents 
+## Why this exists
 
-An experimental feature was to put all the actions above into a single manifest.yaml file and parse it.  If we have a bundle that needs this feature, we can implement it.
+Recipes-contrib is the "real" mechanism, but it lives in a **separate repo** and
+must be kept in lockstep with every bundle release. During active development
+that round-trip is painful. This plugin lets a bundle **carry its own recipe**
+(`recipe/` at the package root), so the recipe ships and versions with the code.
 
-```yaml
-bundles:
-  Survos\Bundle\SurvosFlickrBundle: [all]
-copy-from-recipe:
-  config/: '%CONFIG_DIR%/'
-  src/: '%SRC_DIR%/'
-env: |
-  FLICKR_API_KEY=
-  FLICKR_SECRET=
-copy:
-  - filename: config/packages/survos_flickr.yaml
-    content: |
-      survos_flickr:
-        api_key: '%env(FLICKR_API_KEY)%'
-        secret: '%env(FLICKR_SECRET)%'
-  - filename: config/routes/survos_flickr.yaml
-    content: |
-      survos_flickr:
-        resource: '@SurvosFlickrBundle/config/routes.yaml'
-        prefix: '/admin/flickr'
+The recipe format is **identical to a Symfony Flex recipe** (`recipe/manifest.json`).
+That is deliberate: when a bundle stabilizes, publishing to
+[survos/recipes](https://github.com/survos/recipes) is just copying the `recipe/`
+directory into the recipes repo — no format conversion. The plugin is the
+stopgap; recipes-contrib is the destination.
+
+## What it does
+
+On `composer require` / `composer update` of a package that contains a `recipe/`:
+
+* **`env`** — adds variables to the project `.env` inside a scoped block
+  `###> vendor/package ###` … `###< vendor/package ###` (comments preserved).
+* **`gitignore`** — adds patterns to `.gitignore` in the same scoped-block style.
+* **`copy-from-recipe`** — copies recipe files into the project, **never
+  overwriting** files the user already has.
+* **`post-install-output`** — prints the next-steps block to the console.
+
+On `composer remove`, each of the above is **reversed**: scoped blocks are
+stripped from `.env`/`.gitignore` and recipe-copied files are removed (only if
+unchanged), leaving user edits intact.
+
+## Recipe layout
 
 ```
+my-bundle/
+└── recipe/
+    ├── manifest.json
+    └── config/
+        └── packages/
+            └── survos_bunny.yaml
+```
 
+### `recipe/manifest.json`
 
+Standard Flex manifest format:
 
-Composer plugin for installing configuration files. The installer automatically
-detects the project type in which your library is installed and installs the
-corresponding configuration files from your package.
+```json
+{
+    "bundles": {
+        "Survos\\BunnyBundle\\SurvosBunnyBundle": ["all"]
+    },
+    "copy-from-recipe": {
+        "config/": "%CONFIG_DIR%/"
+    },
+    "env": {
+        "BUNNY_API_KEY": ""
+    },
+    "gitignore": [
+        "/var/bunny/"
+    ],
+    "post-install-output": [
+        "  * <fg=yellow>Next steps:</>",
+        "    1. Get your main API key at https://dash.bunny.net/account/api-key",
+        "    2. bin/console bunny:config <apiKey> (or set BUNNY_API_KEY)",
+        "    3. bin/console bunny:list"
+    ]
+}
+```
 
-Read the [blog](https://medium.com/@endroid/auto-package-configuration-for-symfony-e14780e29d81)
-for more information on why this plugin was originally created.
+The resulting `.env` block:
+
+```dotenv
+###> survos/bunny-bundle ###
+BUNNY_API_KEY=
+###< survos/bunny-bundle ###
+```
 
 ## Installation
 
-``` bash
-composer config allow-plugins.survos/installer true
-
-# dev
-composer config repositories.survos_installer '{"type": "path", "url": "../installer"}' 
-composer require survos/installer:dev-main
-```
-
-Production
-
 ```bash
+composer config allow-plugins.survos/installer true
 composer require survos/installer
 ```
 
-## Usage
+For local development against a path checkout:
 
-Add the configuration files you want to be copied upon installation and update
-of the package to the .installer directory in the root of your package. The files
-will be copied to the corresponding directories in the project.
-
-It tried to use the same structure as the Symfony recipes-config, in the recipe folder at the root of a bundle.
-It uses manifest.yaml instead of manifest.json
-
-```
-fun-bundle
-    └── recipe
-        ├── config
-        │ ├── packages
-        │ │ └── fun.yaml
-        │ └── routes
-        │     └── fun.yaml
-        ├── manifest.yaml
-        └── post-install.txt
+```bash
+composer config repositories.survos_installer '{"type": "path", "url": "../installer"}'
+composer require survos/installer:dev-main
 ```
 
-```yaml
-# manifest.yaml
-fun:
-  bundles:
-    'Vendor\\Bundle\\VendorFunBundle\\FunBundle': all
-    "copy-from-recipe": 
-        "config/": "%CONFIG_DIR%/"
-    "env": 
-        "FUN_ID": "",
-        "FUN_SECRET": ""
-    ".gitignore":
-      - /fun-temp-files
-```
+## Disabling for specific packages
 
-```
-.recipe
-    symfony
-        env.txt
-        gitignore.txt
-        post-install.txt
-        config
-            packages
-                package_name.yaml
-            routes
-                package_name.yaml
-```
-
-Please note that the installer will only copy files that are not yet present in
-the project to make sure user made changes will not be overwritten. If you want
-the latest default configuration just remove the files locally before update.
-
-## Disabling auto installation for a package
-
-Generally you want the files to be installed automatically but if you
-experience issues with the installer or just don't want some package to be
-auto installed you can specify this via your composer.json.
-
-```
-"extra": {
-    "survos": {
-        "installer": {
-            "enabled": false,
-            "exclude": [
-                "survos/asset",
-                "survos/embed"
-            ]
+```json
+{
+    "extra": {
+        "survos": {
+            "installer": {
+                "enabled": true,
+                "exclude": [
+                    "survos/asset",
+                    "survos/embed"
+                ]
+            }
         }
     }
 }
 ```
 
+## Status
+
+Under active development — see [PLAN.md](PLAN.md). The recipe-format decision
+(Flex `manifest.json`) and testing strategy are settled there; the code is
+mid-migration from an older multi-directory convention.
+
 ## Versioning
 
-Version numbers follow the MAJOR.MINOR.PATCH scheme. Backwards compatible
-changes will be kept to a minimum but be aware that these can occur. Lock
-your dependencies for production and test your code when upgrading.
+MAJOR.MINOR.PATCH. Lock your dependencies for production and test on upgrade.
 
 ## License
 
-This bundle is under the MIT license. For the full copyright and license
-information please view the LICENSE file that was distributed with this source code.
+MIT. See the [LICENSE](LICENSE) file.
